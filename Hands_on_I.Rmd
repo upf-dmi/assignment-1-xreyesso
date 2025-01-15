@@ -1,6 +1,6 @@
 ---
-title: "my title"
-author: "Dummy Surname (dummy@mail.com)"
+title: "First hands-on for the DMI course"
+author: "Wael Badr and Xareni Reyes Soto"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"      
 output:
   html_document:
@@ -21,9 +21,25 @@ The original dataset comes from [here](https://archive.ics.uci.edu/ml/datasets/H
 ## Perform an EDA on the dataset
 
 ```{r}
+## 1- Read the table
+d <- read.table("/home/xrs/projects-ubuntu/MBI_data_mining/assignment-1-xreyesso/data/heart_disease_dataset.csv", header=T, sep="\t")
 
+# Load the raw data
+file_path <- "/home/xrs/projects-ubuntu/MBI_data_mining/assignment-1-xreyesso/data/heart_disease_dataset.csv"
+raw_data <- readLines(file_path)
 
+# Split the data
+processed_data <- strsplit(raw_data, "\\s+")
 
+# Convert to data frame
+data_frame <- do.call(rbind, processed_data)
+
+# Set the first row as column names
+colnames(data_frame) <- data_frame[1,] # Use the first row as column names
+data_frame <- data_frame[-1, ]                # Remove the first row from the data
+
+# Rearrange the data so that the last column (patient_id) is now the first
+data_frame <- data_frame[, c(ncol(data_frame), 1:(ncol(data_frame) - 1))]
 ```
 
 
@@ -40,6 +56,12 @@ Using the supplementary material from the [Difference in mortality rates in hosp
 ## Reproduce Figure 1 from the publication
 
 ```{r}
+library(readxl)
+library(ggplot2)
+table <- read_excel("/home/xrs/Documents/02_DMI/Hands-on_1/Table 1.XLSX") 
+
+ggplot(data = table, mapping = aes(x=Age)) +
+  geom_histogram(binwidth = 10, color = "black", fill = "skyblue")
 
 ```
 
