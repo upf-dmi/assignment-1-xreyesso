@@ -21,6 +21,7 @@ The original dataset comes from [here](https://archive.ics.uci.edu/ml/datasets/H
 ## Perform an EDA on the dataset
 
 ```{r}
+library(outliers)
 ## 1- Read the table
 d <- read.table("/home/xrs/projects-ubuntu/MBI_data_mining/assignment-1-xreyesso/data/heart_disease_dataset.csv", header=T, sep="\t")
 
@@ -32,7 +33,8 @@ raw_data <- readLines(file_path)
 processed_data <- strsplit(raw_data, "\\s+")
 
 # Convert to data frame
-data_frame <- do.call(rbind, processed_data)
+data_frame <- do.call(rbind, processed_data) # This turns the data into a matrix
+data_frame <- as.data.frame(data_frame) # Change the type to data frame
 
 # Set the first row as column names
 colnames(data_frame) <- data_frame[1,] # Use the first row as column names
@@ -40,6 +42,13 @@ data_frame <- data_frame[-1, ]                # Remove the first row from the da
 
 # Rearrange the data so that the last column (patient_id) is now the first
 data_frame <- data_frame[, c(ncol(data_frame), 1:(ncol(data_frame) - 1))]
+
+# Convert the data of columns to numeric to use the outlier function
+data_frame$chol <- as.numeric(as.character(data_frame$chol))
+data_frame$trestbps <- as.numeric(as.character(data_frame$trestbps))
+
+outlier(data_frame$chol)
+outlier(data_frame$trestbps)
 ```
 
 
