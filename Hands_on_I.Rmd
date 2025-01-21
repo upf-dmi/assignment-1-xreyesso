@@ -23,10 +23,10 @@ The original dataset comes from [here](https://archive.ics.uci.edu/ml/datasets/H
 ```{r}
 library(outliers)
 ## 1- Read the table
-d <- read.table("/home/xrs/projects-ubuntu/MBI_data_mining/assignment-1-xreyesso/data/heart_disease_dataset.csv", header=T, sep="\t")
+d <- read.table("/home/wael-badr/Desktop/UPF/2nd_trimester/DMI/assignment-1-xreyesso/data/heart_disease_dataset.csv", header=T, sep="\t")
 
 # Load the raw data
-file_path <- "/home/xrs/projects-ubuntu/MBI_data_mining/assignment-1-xreyesso/data/heart_disease_dataset.csv"
+file_path <- "/home/wael-badr/Desktop/UPF/2nd_trimester/DMI/assignment-1-xreyesso/data/heart_disease_dataset.csv"
 raw_data <- readLines(file_path)
 
 # Split the data
@@ -49,12 +49,29 @@ data_frame$trestbps <- as.numeric(as.character(data_frame$trestbps))
 
 outlier(data_frame$chol)
 outlier(data_frame$trestbps)
+
+
 ```
 
 
 ## Create visualizations in order to show which variables seem to be more associated with heart disease
 
 ```{r}
+
+library(corrplot)
+library(dplyr) 
+# Visualize Correlation Matrix
+# Select relevant columns
+selected_data <- data_frame[, c("num", "oldpeak", "age", "trestbps", "chol", "thalach")]
+
+# Ensure columns are numeric
+selected_data <- selected_data %>%
+  mutate(across(everything(), as.numeric))
+
+#correlation matrix with the numeric measurments 
+cor_matrix <- cor(selected_data, method = "spearman")
+corrplot(cor_matrix, method = "color", type = "full", addCoef.col = "black",
+         tl.col = "black", tl.srt = 45, number.cex = 0.8)
 
 ```
 
