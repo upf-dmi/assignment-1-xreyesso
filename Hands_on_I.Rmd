@@ -98,7 +98,9 @@ ggplot(df_missing, aes(x = reorder(Variable,-Missing_Count), y = Missing_Count))
        x = "Variables",
        y = "Missing values counts") +
   theme_minimal()
-
+```
+We do have some missing values, but we removed them in the cleaning steps above.
+```{r}
 #XRS 2. Look at the distribution of the target variable: heart disease
 num_counts <- as.data.frame(table(data_frame$num))
 
@@ -109,7 +111,9 @@ ggplot(num_counts, mapping = aes(x=Var1, y=Freq)) +
        x = "num",
        y = "Count") +
   theme_minimal()
-
+```
+The sample seems to be unbalanced, with the majority of the patients being in the category 0 .
+```{r}
 #XRS 3. Indicate what are the numerical variables and which categorical
 
 
