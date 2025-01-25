@@ -21,8 +21,9 @@ The original dataset comes from [here](https://archive.ics.uci.edu/ml/datasets/H
 ## Perform an EDA on the dataset
 
 As we saw in class, the major tasks during EDA are data cleaning, data integration, data reduction and data transformation. We will start by cleaning the data: we will handle missing data, check if there are inconsistencies with the data types, and identify and remove outliers.
+Data integration is not necessary for this exercise, since we are working with only one file.
 
-
+TODO: are data reduction (dimensionality reduction, numerosity reduction and datacompression) and data transformation (normalizing, scaling) applicable to this exercise?
 ```{r}
 library(outliers)
 library(rmarkdown)
@@ -32,68 +33,94 @@ data_frame <- read.table("/home/xrs/projects-ubuntu/MBI_data_mining/assignment-1
 # The column patient_id works great as entity identifier. Rearrange the data so that this column is now the first
 data_frame <- data_frame[, c(ncol(data_frame), 1:(ncol(data_frame) - 1))]
 
-# Check the data types
+#Data Cleaning
+# 1. Check the data types
+# 2. Check for missing values
+# 3. Check for duplicate rows
+# 4. Check outliers and remove them
+# 5. Statistics summary
+
+# 1. Check the data types
 str(data_frame)
 
 # We notice that columns ca and thal have type 'char', so we need to convert them to integers for further processing and visualization
-data_frame$ca <- as.integer(data_frame$ca) 
-data_frame$thal <- as.integer(data_frame$thal)
+data_frame$ca <- as.numeric(data_frame$ca) 
+data_frame$thal <- as.numeric(data_frame$thal)
 
 # We verify that the columns have the correct data types after the conversion
 str(data_frame)
 
-# There were several values in ca and thal with 'NA'. We choose to delete them
-# For this, we replace d with a new version of the table with the NA rows removed
-d <-  na.omit(data_frame)
+# 2. We check for missing values
+missing_counts <- colSums(is.na(data_frame))
+print(missing_counts)
 
-# Check if there are any duplicate rows in the table
+# There 4 'NA' values in ca and 2 'NA' values in thal. We choose to delete them. For this, we replace data_frame with a new version of the table with the NA rows removed
+data_frame <-  na.omit(data_frame)
+
+# 3. Check if there are any duplicate rows in the table
 any(duplicated(data_frame))     # returns FALSE
 
-# We proceed to check if there are outliers
-outlier(data_frame$trestbps)    # returns 200
-outlier(data_frame$chol)        # returns 564
-outlier(data_frame$age)         # returns 29
-outlier(data_frame$thalach)     # returns 71
-outlier(data_frame$oldpeak)     # returns 6.2
-outlier(data_frame$thal)        # returns 7
+# 4. We proceed to check if there are outliers using the IQR method: outliers as defined as values less than Q1 - 1.5*IQR or greater than Q3 + 1.5*IQR
 
-# Count how many rows outliers we have in each case
-# na.rm = TRUE ignores NA values
-sum(data_frame$trestbps == 200, na.rm = TRUE)    # returns 1
-sum(data_frame$chol == 564, na.rm = TRUE)        # returns 1
-sum(data_frame$age == 29, na.rm = TRUE)          # returns 1
-sum(data_frame$thalach == 71, na.rm = TRUE)      # returns 1 
-sum(data_frame$oldpeak == 6.2, na.rm = TRUE)     # returns 1
-sum(data_frame$thal == 7, na.rm = TRUE)          # returns 115
+# Compute the 1st and 3rd quartiles (Q1 and Q3), using the apply function by columns
+Q1 <- apply(data_frame, 2, quantile, 0.25, na.rm=TRUE)
+Q3 <- apply(data_frame, 2, quantile, 0.75, na.rm=TRUE)
 
-# The columns threstbps, chol, age, thalach, and oldpeak have 1 outlier. This is different from thal, for which 7 appears 115 times, we cannot remove these rows
+# Compute the Interquartile range (IQR)
+IQR <- Q3 - Q1
 
-#Data Cleaning
-#a) Check the data type
-#b) Check for the data characters mistakes
-#c) Check for missing values and replace them
-#d) Check for duplicate rows
-#e) Statistics summary
-#f) Outliers and how to remove them
+# Identify rows that contain at least one outlier, we use the apply function by rows to identify them
+outlier_rows <- apply(data_frame, 1, function(x) any(x < (Q1 - 1.5*IQR) | x > (Q3 + 1.5*IQR)))
 
+# Store outlier rows in a separate data frame
+outliers_df <- data_frame[outlier_rows, ]
 
+# Remove outliers by doing data_frame <- data_frame[! ... , ]
+data_frame <- data_frame[!outlier_rows, ]
+
+# 5. Summary statistics
+summary(data_frame)
+
+```
+Now that we cleaned the data, we proceed to do the Exploratory Data Analysis. We used the steps provided in https://www.kaggle.com/code/georgyzubkov/heart-disease-exploratory-data-analysis as guide.
+```{r}
 #XRS 1. Check the dataset for gaps in the data
+# Create a data frame for the missing values for plotting
+df_missing <- data.frame(Variable = names(missing_counts), Missing_Count = missing_counts)
+# Load ggplot2
+library(ggplot2)
 
+# Plot
+ggplot(df_missing, aes(x = reorder(Variable,-Missing_Count), y = Missing_Count)) +
+  geom_bar(stat = "identity", fill = "darkblue", alpha = 0.7)+
+  coord_flip() + # We flip the graph for improved readability
+  labs(title = "Check for gaps in our data",
+       x = "Variables",
+       y = "Missing values counts") +
+  theme_minimal()
 
 #XRS 2. Look at the distribution of the target variable: heart disease
+num_counts <- as.data.frame(table(data_frame$num))
+
+# Plot
+ggplot(num_counts, mapping = aes(x=Var1, y=Freq)) +
+  geom_bar(stat = "Identity", fill = "blueviolet") +
+  labs(title = "Distribution of our target variable",
+       x = "num",
+       y = "Count") +
+  theme_minimal()
+
+#XRS 3. Indicate what are the numerical variables and which categorical
 
 
-#XRS 3. Look at unique values in the categorical objects:
+#XRS 4. Look at unique values in the categorical objects
 
-#XRS 4. Indicate what are the numerical variables and which categorical
 
 #WB 5. Analyze numerical variables (visualizing continuous columns) -> plot them -> does any of them seem to have a normal distribution?
-
 #WB 6. Look at the distribution of number of people with heart disease from various factors
-
 #WB 7. Look at the distribution of categorical variables depending on gender
-
-#WB 8. Look at outliers in numerical values depending on several factors ---> from all the graphs presented, it can be concluded that e.g. "alcohol consumption and smoking are not the main factors in heart disease"
+#WB 8. Look at outliers in numerical values depending on several factors 
+#CONCLUSION ---> e.g. from all the graphs presented, it can be concluded that e.g. "alcohol consumption and smoking are not the main factors in heart disease"
 
 
 ```
