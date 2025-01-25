@@ -13,42 +13,87 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-# Analysis of the Heart Disease Dataset 
+# 1. Analysis of the Heart Disease Dataset 
 Load the data from
 [here](https://raw.githubusercontent.com/jpinero/DMI_2021/main/datasets/heart_disease_dataset.csv), and the description is [here](https://raw.githubusercontent.com/jpinero/DMI_2021/main/datasets/heart_disease_description.txt). 
 The original dataset comes from [here](https://archive.ics.uci.edu/ml/datasets/Heart+Disease) and corresponds to the [processed cleveland data](https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.data)
 
 ## Perform an EDA on the dataset
 
+As we saw in class, the major tasks during EDA are data cleaning, data integration, data reduction and data transformation. We will start by cleaning the data: we will handle missing data, check if there are inconsistencies with the data types, and identify and remove outliers.
+
+
 ```{r}
 library(outliers)
-## 1- Read the table
-d <- read.table("/home/xrs/projects-ubuntu/MBI_data_mining/assignment-1-xreyesso/data/heart_disease_dataset.csv", header=T, sep="\t")
+library(rmarkdown)
+# Read the table
+d <- read.table("/home/xrs/projects-ubuntu/MBI_data_mining/assignment-1-xreyesso/data/heart_disease_dataset.csv", header=TRUE, sep=" ")
 
-# Load the raw data
-file_path <- "/home/xrs/projects-ubuntu/MBI_data_mining/assignment-1-xreyesso/data/heart_disease_dataset.csv"
-raw_data <- readLines(file_path)
+# The column patient_id works great as entity identifier. Rearrange the data so that this column is now the first
+d <- d[, c(ncol(d), 1:(ncol(d) - 1))]
 
-# Split the data
-processed_data <- strsplit(raw_data, "\\s+")
+# Check the data types
+str(d)
 
-# Convert to data frame
-data_frame <- do.call(rbind, processed_data) # This turns the data into a matrix
-data_frame <- as.data.frame(data_frame) # Change the type to data frame
+# We notice that columns ca and thal have type 'char', so we need to convert them to integers for further processing and visualization
+d$ca <- as.integer(d$ca) 
+d$thal <- as.integer(d$thal)
 
-# Set the first row as column names
-colnames(data_frame) <- data_frame[1,] # Use the first row as column names
-data_frame <- data_frame[-1, ]                # Remove the first row from the data
+# We verify that the columns have the correct data types after the conversion
+str(d)
 
-# Rearrange the data so that the last column (patient_id) is now the first
-data_frame <- data_frame[, c(ncol(data_frame), 1:(ncol(data_frame) - 1))]
+# There were several values in ca and thal with 'NA'. We choose to delete them
+# For this, we replace d with a new version of the table with the NA rows removed
+d <-  na.omit(d)
 
-# Convert the data of columns to numeric to use the outlier function
-data_frame$chol <- as.numeric(as.character(data_frame$chol))
-data_frame$trestbps <- as.numeric(as.character(data_frame$trestbps))
+# Check if there are any duplicate rows in the table
+any(duplicated(d))     # returns FALSE
 
-outlier(data_frame$chol)
-outlier(data_frame$trestbps)
+# We proceed to check if there are outliers
+outlier(d$trestbps)    # returns 200
+outlier(d$chol)        # returns 564
+outlier(d$age)         # returns 29
+outlier(d$thalach)     # returns 71
+outlier(d$oldpeak)     # returns 6.2
+outlier(d$thal)        # returns 7
+
+# Count how many rows outliers we have in each case
+# na.rm = TRUE ignores NA values
+sum(d$trestbps == 200, na.rm = TRUE)    # returns 1
+sum(d$chol == 564, na.rm = TRUE)        # returns 1
+sum(d$age == 29, na.rm = TRUE)          # returns 1
+sum(d$thalach == 71, na.rm = TRUE)      # returns 1 
+sum(d$oldpeak == 6.2, na.rm = TRUE)     # returns 1
+sum(d$thal == 7, na.rm = TRUE)          # returns 115
+
+# The columns threstbps, chol, age, thalach, and oldpeak have 1 outlier. This is different from thal, for which 7 appears 115 times, we cannot remove these rows
+
+#Data Cleaning
+#a) Check the data type
+#b) Check for the data characters mistakes
+#c) Check for missing values and replace them
+#d) Check for duplicate rows
+#e) Statistics summary
+#f) Outliers and how to remove them
+
+
+#XRS 1. Check the dataset for gaps in the data
+
+
+#XRS 2. Look at the distribution of the target variable: heart disease
+
+
+#XRS 3. Look at unique values in the categorical objects:
+
+#XRS 4. Indicate what are the numerical variables and which categorical
+
+#WB 5. Analyze numerical variables (visualizing continuous columns) -> plot them -> does any of them seem to have a normal distribution?
+
+#WB 6. Look at the distribution of number of people with heart disease from various factors
+
+#WB 7. Look at the distribution of categorical variables depending on gender
+
+#WB 8. Look at outliers in numerical values depending on several factors ---> from all the graphs presented, it can be concluded that e.g. "alcohol consumption and smoking are not the main factors in heart disease"
 ```
 
 
@@ -59,7 +104,7 @@ outlier(data_frame$trestbps)
 ```
 
 
-# 2 Difference in mortality rates in hospitalized COVID-19 patients 
+# 2. Difference in mortality rates in hospitalized COVID-19 patients 
 Using the supplementary material from the [Difference in mortality rates in hospitalized COVID-19 patients identified by cytokine profile clustering using a machine learning approach: An outcome prediction alternative](https://www.frontiersin.org/articles/10.3389/fmed.2022.987182/full), perform the following tasks
 
 ## Reproduce Figure 1 from the publication
