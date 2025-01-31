@@ -161,9 +161,12 @@ Using the supplementary material from the [Difference in mortality rates in hosp
 library(readxl)
 library(ggplot2)
 library(dplyr)
+library(gridExtra)
+library(grid)
 
 table <- read_excel("/home/xrs/Documents/02_DMI/Hands-on_1/Table 1.XLSX")
 
+# Figure 1, part 1
 # Standardize column names
 table <- table %>%
   rename_with(~ gsub("\\s+", "_", .)) %>%
@@ -197,6 +200,55 @@ ggplot(data = table_unique, mapping = aes(x = age)) +
     axis.title.y = element_text(size = 14),
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
   )
+
+# Figure 1, part 2
+# Define the table data
+data <- matrix(c("G1", "-",  "-",   "-",
+                 "G2", "-/+", "+/-", "-",
+                 "G3", "+",   "-",   "+",
+                 "G4", "-/+", "+",   "+"),
+               nrow = 4, ncol = 4, byrow = TRUE)
+
+colnames <- c("Clinical\nclassification", "NIV", "AMV", "ARDS")
+
+# Create the tableGrob
+table <- tableGrob(data,
+                   rows = NULL, # No row names
+                   cols = colnames)
+
+# Define the theme with alternating row colors and centered text
+theme <- ttheme_minimal(
+  core = list(
+    fg_params = list(hjust = 0.5, x = 0.5, fontsize = 12), # Center-align and font size
+    bg_params = list(fill = c(rep(c("white", "lightgray"), length.out = nrow(data))), 
+                     col = "white") # Alternating row colors with white gridlines
+  ),
+  colhead = list(
+    fg_params = list(fontsize = 14, fontface = "bold"), # Header style
+    bg_params = list(fill = "lightgray", col = "white") # Header background
+  )
+)
+
+# Recreate the table with the theme
+table <- tableGrob(data, rows = NULL, cols = colnames, theme = theme)
+
+# Add white lines (gridlines) between rows and columns
+table$grobs <- lapply(table$grobs, function(grob) {
+  if (inherits(grob, "rect")) {
+    grob$gp$col <- "white" # Set gridline color to white
+    grob$gp$lwd <- 2       # Set line width
+  }
+  return(grob)
+})
+
+# Add a title
+title <- textGrob("Definition of the clinical classification",
+                  gp = gpar(fontsize = 14, fontface = "bold"))
+
+# Combine title and table into a single plot with closer spacing
+grid.newpage()
+grid.arrange(table, ncol = 1) # I wasnt able to add the title without messing up the figure
+
 ```
 
 
@@ -274,56 +326,7 @@ pheatmap(t(data_matrix),
 
 
 ```{r}
-# Load necessary libraries
-library(gridExtra)
-library(grid)
 
-# Define the table data
-data <- matrix(c("G1", "-",  "-",   "-",
-                 "G2", "-/+", "+/-", "-",
-                 "G3", "+",   "-",   "+",
-                 "G4", "-/+", "+",   "+"),
-               nrow = 4, ncol = 4, byrow = TRUE)
-
-colnames <- c("Clinical\nclassification", "NIV", "AMV", "ARDS")
-
-# Create the tableGrob
-table <- tableGrob(data,
-                   rows = NULL, # No row names
-                   cols = colnames)
-
-# Define the theme with alternating row colors and centered text
-theme <- ttheme_minimal(
-  core = list(
-    fg_params = list(hjust = 0.5, x = 0.5, fontsize = 12), # Center-align and font size
-    bg_params = list(fill = c(rep(c("white", "lightgray"), length.out = nrow(data))), 
-                     col = "white") # Alternating row colors with white gridlines
-  ),
-  colhead = list(
-    fg_params = list(fontsize = 14, fontface = "bold"), # Header style
-    bg_params = list(fill = "lightgray", col = "white") # Header background
-  )
-)
-
-# Recreate the table with the theme
-table <- tableGrob(data, rows = NULL, cols = colnames, theme = theme)
-
-# Add white lines (gridlines) between rows and columns
-table$grobs <- lapply(table$grobs, function(grob) {
-  if (inherits(grob, "rect")) {
-    grob$gp$col <- "white" # Set gridline color to white
-    grob$gp$lwd <- 2       # Set line width
-  }
-  return(grob)
-})
-
-# Add a title
-title <- textGrob("Definition of the clinical classification",
-                  gp = gpar(fontsize = 14, fontface = "bold"))
-
-# Combine title and table into a single plot with closer spacing
-grid.newpage()
-grid.arrange(table, ncol = 1) # I wasnt able to add the title without messing up the figure
 ```
 
 
