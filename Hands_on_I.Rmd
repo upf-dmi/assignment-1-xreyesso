@@ -28,7 +28,6 @@ TODO: are data reduction (dimensionality reduction, numerosity reduction and dat
 library(outliers)
 library(rmarkdown)
 
-#getwd()
 # Read the table
 data_frame <- read.table("data/heart_disease_dataset.csv", header=TRUE, sep=" ")
 
@@ -193,7 +192,6 @@ library(dplyr)
 library(gridExtra)
 library(grid)
 
-getwd()
 table <- read_excel("data/Table 1.XLSX")
 
 # Figure 1, part 1
