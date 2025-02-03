@@ -27,8 +27,10 @@ TODO: are data reduction (dimensionality reduction, numerosity reduction and dat
 ```{r}
 library(outliers)
 library(rmarkdown)
+
+#getwd()
 # Read the table
-data_frame <- read.table("/home/xrs/projects-ubuntu/MBI_data_mining/assignment-1-xreyesso/data/heart_disease_dataset.csv", header=TRUE, sep=" ")
+data_frame <- read.table("data/heart_disease_dataset.csv", header=TRUE, sep=" ")
 
 # The column patient_id works great as entity identifier. Rearrange the data so that this column is now the first
 data_frame <- data_frame[, c(ncol(data_frame), 1:(ncol(data_frame) - 1))]
@@ -82,7 +84,30 @@ data_frame <- data_frame[!outlier_rows, ]
 summary(data_frame)
 
 ```
-Now that we cleaned the data, we proceed to do the Exploratory Data Analysis. We used the steps provided in https://www.kaggle.com/code/georgyzubkov/heart-disease-exploratory-data-analysis as guide.
+Now that we cleaned the data, we proceed to do the Exploratory Data Analysis. We used the steps provided in [this guide](https://www.kaggle.com/code/georgyzubkov/heart-disease-exploratory-data-analysis).  
+
+The dataset contains 303 records, each variable has 15 fields. The dataset contains variables of different types:
+
+**- Discrete:**  
+  - `age`  
+  - `trestbps` (resting blood pressure, in mmHg on admission to the hospital)  
+  - `chol` (serum cholesterol levels)  
+  - `thalach` (maximum heart rate achieved)  
+  - `ca` (number of major vessels)  
+
+**- Continuous:**  
+  - `oldpeak` (ST depression induced by exercise relative to rest)  
+
+**- Categorical:**  
+  - `sex`  
+  - `cp` (chest pain type)  
+  - `fbs` (fasting blood sugar)  
+  - `restecg` (resting electrocardiographic results)  
+  - `exang` (exercise induced angina)  
+  - `slope` (the slope of ST segment during exercise)  
+  - `thal` (represents different types of thalassemia)  
+
+
 ```{r}
 #XRS 1. Check the dataset for gaps in the data
 # Create a data frame for the missing values for plotting
@@ -114,11 +139,15 @@ ggplot(num_counts, mapping = aes(x=Var1, y=Freq)) +
 ```
 The sample seems to be unbalanced, with the majority of the patients being in the category 0 .
 ```{r}
-#XRS 3. Indicate what are the numerical variables and which categorical
-
-
-#XRS 4. Look at unique values in the categorical objects
-
+# XRS 3: Indicate the types of variables (see paragraph above)
+# XRS 4: Look at unique values in the categorical objects
+unique(data_frame$sex)
+unique(data_frame$cp)
+unique(data_frame$fbs)
+unique(data_frame$restecg)
+unique(data_frame$exang)
+unique(data_frame$slope)
+unique(data_frame$thal)
 
 #WB 5. Analyze numerical variables (visualizing continuous columns) -> plot them -> does any of them seem to have a normal distribution?
 #WB 6. Look at the distribution of number of people with heart disease from various factors
@@ -164,7 +193,8 @@ library(dplyr)
 library(gridExtra)
 library(grid)
 
-table <- read_excel("/home/xrs/Documents/02_DMI/Hands-on_1/Table 1.XLSX")
+getwd()
+table <- read_excel("data/Table 1.XLSX")
 
 # Figure 1, part 1
 # Standardize column names
@@ -173,8 +203,9 @@ table <- table %>%
   rename_with(tolower)
 
 # Step 1: Remove exact duplicate rows
-table_unique <- table %>% distinct()
+table_unique <- table %>% distinct()    # Two rows were removed
 
+# Create an Age Group column for plotting
 table_unique <- table_unique %>%
   mutate(age_group = cut(age, breaks = seq(20, 100, by = 10), right = FALSE, include.lowest = TRUE))
 
@@ -248,7 +279,6 @@ title <- textGrob("Definition of the clinical classification",
 # Combine title and table into a single plot with closer spacing
 grid.newpage()
 grid.arrange(table, ncol = 1) # I wasnt able to add the title without messing up the figure
-
 ```
 
 
@@ -262,7 +292,7 @@ library(tidyr)
 library(pheatmap)
 
 # 1. Read the data from the Excel document
-raw_data <- read_excel("/home/xrs/Documents/02_DMI/Hands-on_1/Table 2.XLSX", 1)
+raw_data <- read_excel("data/Table 2.XLSX", 1)
 
 # View the first few rows
 head(raw_data)
