@@ -148,15 +148,94 @@ unique(data_frame$exang)
 unique(data_frame$slope)
 unique(data_frame$thal)
 
-#WB 5. Analyze numerical variables (visualizing continuous columns) -> plot them -> does any of them seem to have a normal distribution?
-#WB 6. Look at the distribution of number of people with heart disease from various factors
-#WB 7. Look at the distribution of categorical variables depending on gender
-#WB 8. Look at outliers in numerical values depending on several factors 
+# WB 5: Analyze numerical variables (visualizing continuous columns)
+num_vars <- c("age", "trestbps", "chol", "thalach", "oldpeak")  
+cat_vars <- c("sex", "cp", "fbs", "restecg", "exang", "slope", "thal", "ca")  
+
+for (var in num_vars) {
+  print(
+    ggplot(data_frame, aes_string(x = var)) +
+      geom_histogram(fill = "blue", color = "black", alpha = 0.7, bins = 30) +  # Auto-adjust bins
+      labs(title = paste("Distribution of", var), x = var, y = "Count") +
+      theme_minimal()
+  )
+}
+```
+The distributions of age, cholesterol, and maximum heart rate appear roughly normal, while resting blood pressure shows multiple peaks, suggesting possibly different subgroups within the dataset. ST depression is highly right-skewed, with most values close to zero, indicating that significant ST depression is relatively rare in the dataset.
+```{r}
+# WB 6. Look at the distribution of number of people with heart disease from various factors
+# Get the number of unique values in num
+num_levels <- length(unique(data_frame$num))
+
+# Generate a color palette with enough colors
+color_palette <- scales::hue_pal()(num_levels)
+
+for (var in num_vars) {
+  print(
+    ggplot(data_frame, aes_string(x = "factor(num)", y = var, fill = "factor(num)")) +
+      geom_boxplot(alpha = 0.7, outlier.color = "red") +
+      scale_fill_manual(values = color_palette) +  # Use dynamic colors
+      labs(title = paste("Heart Disease vs", var), x = "Heart Disease (num)", y = var) +
+      theme_minimal()
+  )
+}
+```
+Thalach decreases, while oldpeak increases with heart disease severity, suggesting their strong predictive value. Age shows a slight upward trend, while trestbps and chol display high variability but no clear pattern.
+```{r}
+for (var in cat_vars) {
+  print(
+    ggplot(data_frame, aes_string(x = var, fill = "factor(num)")) +
+      geom_bar(position = position_dodge(width = 0.9)) +  # Improved positioning
+      labs(title = paste("Heart Disease Distribution by", var), x = var, y = "Count") +
+      theme_minimal()
+  )
+}
+```
+Heart disease is more prevalent in males, higher chest pain types, and abnormal thalassemia. Higher major vessels count (ca), slope, and exercise-induced angina (exang) also show trends linked to severity.
+```{r}
+# WB 7. Look at the distribution of categorical variables depending on gender
+for (var in cat_vars) {
+  print(
+    ggplot(data_frame, aes_string(x = var, fill = "factor(sex)")) +
+      geom_bar(position = position_dodge(width = 0.9)) +
+      labs(title = paste(var, "Distribution by Gender"), x = var, y = "Count") +
+      theme_minimal()
+  )
+}
+```
+Males dominate the dataset and have higher chest pain type, abnormal thalassemia, and major vessels (ca). Gender-based differences exist in exercise-induced angina and resting ECG, potentially impacting heart disease risk.
+```{r}
+# WB 8. Look at outliers in numerical values depending on several factors
+for (var in num_vars) {
+  print(
+    ggplot(data_frame, aes_string(x = "factor(num)", y = var, fill = "factor(num)")) +
+      geom_boxplot(alpha = 0.7, outlier.color = "red") +
+      scale_fill_manual(values = color_palette) +
+      labs(title = paste("Outliers in", var, "by Heart Disease"), x = "Heart Disease (num)", y = var) +
+      theme_minimal()
+  )
+}
+```
+Outliers are present in cholesterol, maximum heart rate (thalach), and ST depression (oldpeak), particularly in severe heart disease cases. Oldpeak increases with disease severity, while thalach decreases, reinforcing their potential as key indicators.
+```{r}
+for (var in num_vars) {
+  print(
+    ggplot(data_frame, aes_string(x = "factor(sex)", y = var, fill = "factor(sex)")) +
+      geom_boxplot(alpha = 0.7, outlier.color = "red") +
+      scale_fill_manual(values = c("#00BFC4", "#F8766D")) +
+      labs(title = paste("Outliers in", var, "by Gender"), x = "Gender (0 = Female, 1 = Male)", y = var) +
+      theme_minimal()
+  )
+}
+
 #CONCLUSION ---> e.g. from all the graphs presented, it can be concluded that e.g. "alcohol consumption and smoking are not the main factors in heart disease"
 
 
 ```
+Outliers are minimal across genders, with males showing slightly higher oldpeak values and females exhibiting lower but more varied thalach. Other variables have similar distributions, suggesting gender differences may be less pronounced in outliers.
 
+
+Heart disease severity correlates with increasing oldpeak and decreasing thalach, with males, higher cp, thal 7, and ca > 0 more affected. Chol and trestbps show variability but are weaker predictors, while outliers have minimal impact on trends. Lifestyle factors like alcohol and smoking were not assessed.
 
 ## Create visualizations in order to show which variables seem to be more associated with heart disease
 
@@ -276,7 +355,74 @@ title <- textGrob("Definition of the clinical classification",
 
 # Combine title and table into a single plot with closer spacing
 grid.newpage()
-grid.arrange(table, ncol = 1) # I wasnt able to add the title without messing up the figure
+grid.arrange(table, ncol = 1)
+```
+```{r}
+#Figures 1c and 1d
+# Classify patients into G1, G2, G3, or G4
+table_unique <- table_unique %>%
+  mutate(
+    group = case_when(
+      use_of_niv == "No" & use_of_amv == "No" & days_with_ards == 0 ~ "G1",
+      days_with_ards == 0 ~ "G2",
+      use_of_niv == "Yes" & use_of_amv == "No" & days_with_ards > 0 ~ "G3",
+      use_of_amv == "Yes" & days_with_ards > 0 ~ "G4"
+    )
+  ) %>%
+  filter(!is.na(group))  # Remove NA values
+
+
+# Count patients in each group
+group_counts <- table_unique %>%
+  count(group)
+
+# Create Figure 1C - Clinical Classification Bar Plot
+fig_1c <- ggplot(group_counts, aes(x = group, y = n, fill = group)) +
+  geom_bar(stat = "identity", width = 0.6) +
+  geom_text(aes(label = n), vjust = -0.5, size = 5, fontface = "plain") +  # Not bold
+  scale_fill_manual(values = c("G1" = "#76c7c0", "G2" = "#f6e58d", "G3" = "#a29bfe", "G4" = "#ff7675")) +
+  scale_y_continuous(breaks = seq(0, 80, by = 20), limits = c(0, 80)) +
+  labs(title = "Clinical classification", x = "Clinical classification", y = "Frequency (n)") +  
+  theme_classic() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.text.x = element_text(size = 12, face = "plain"),  
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    axis.line.x = element_blank(),  # Remove X-axis line
+    axis.ticks.x = element_blank(),  # Remove X-axis ticks
+    legend.position = "none",  # Remove legend
+    plot.margin = margin(20, 40, 20, 40)  # Increase width spacing
+  )
+
+
+# Create Figure 1D - Vital Status Bar Plot
+fig_1d <- ggplot(vital_counts %>% filter(death %in% c("No", "Yes")), aes(x = death, y = n, fill = death)) +
+  geom_bar(stat = "identity", width = 0.6) +
+  geom_text(aes(label = n), vjust = -0.2, size = 5, fontface = "plain") +  # Keep labels exactly on top
+  scale_fill_manual(values = c("No" = "#76c7c0", "Yes" = "#f6e58d")) +
+  scale_y_continuous(breaks = seq(0, 160, by = 50), limits = c(0, 160)) +  # Allow space for labels
+  labs(title = "Vital status", x = "Death", y = "Frequency (n)") +
+  theme_classic() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    axis.text.x = element_text(size = 12, face = "plain"),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    axis.line.x = element_blank(),  # Remove X-axis line
+    axis.ticks.x = element_blank(),  # Remove X-axis ticks
+    legend.position = "none",  # Remove legend
+    plot.margin = margin(20, 40, 20, 40)  # Adjust spacing
+  )
+
+
+# Display 1a,1c, and 1d
+print(fig_1a)
+print(fig_1c)
+print(fig_1d)
+
 ```
 
 
