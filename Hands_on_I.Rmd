@@ -396,6 +396,10 @@ fig_1c <- ggplot(group_counts, aes(x = group, y = n, fill = group)) +
     plot.margin = margin(20, 40, 20, 40)  # Increase width spacing
   )
 
+# Count number of deaths
+vital_counts <- table_unique %>%
+  count(death) %>%
+  arrange(match(death, c("No", "Yes")))
 
 # Create Figure 1D - Vital Status Bar Plot
 fig_1d <- ggplot(vital_counts %>% filter(death %in% c("No", "Yes")), aes(x = death, y = n, fill = death)) +
@@ -418,8 +422,7 @@ fig_1d <- ggplot(vital_counts %>% filter(death %in% c("No", "Yes")), aes(x = dea
   )
 
 
-# Display 1a,1c, and 1d
-print(fig_1a)
+# Display 1c, and 1d
 print(fig_1c)
 print(fig_1d)
 
