@@ -493,15 +493,6 @@ aggregated_data <- clean_data %>%
 # Merge patient group information (G1-G4)
 aggregated_data <- left_join(aggregated_data, table_unique %>% select(id, group), by = "id")
 
-# Scale each cytokine between 0 (min) and 1 (max)
-#min_max_norm <- function(x) {
-#  return((x - min(x, na.rm = TRUE))/(max(x, na.rm = TRUE) - min(x, na.rm = TRUE)))
-#}
-
-# Apply normalization to all cytokine columns (except for id)
-#normalized_data <- aggregated_data %>%
-#  mutate(across(-c(id, group), min_max_norm))
-
 # Remove unnecessary columns and prepare the data for heatmap
 # Only keep the first 14 columns of the data frame, except column Day (which contain the cytokine measurements we are interested in plotting)
 new_aggregated_data <- select(aggregated_data, c(id, colnames(aggregated_data)[3:14], group))
