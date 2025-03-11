@@ -533,7 +533,7 @@ pheatmap(t(data_matrix),
          show_colnames = FALSE,
          fontsize_row = 10,
          main = "Cytokine Expression Heatmap (Relative Expression)",
-         annotation_col_group = annotation_col_group,  
+         annotation_col = annotation_col_group,  
          annotation_colors = group_colors)
 
 ```
