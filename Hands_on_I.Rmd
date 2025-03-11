@@ -282,6 +282,23 @@ table <- table %>%
 # Step 1: Remove exact duplicate rows
 table_unique <- table %>% distinct()    # Two rows were removed
 
+# Further explore the data: check for duplicate ids in table_unique
+duplicates_table_unique_1 <- table_unique %>%
+  group_by(id) %>%
+  filter(n() > 1)
+
+```
+We identified 6 IDs that appear twice in the dataset, with different values for their corresponding measurements.
+Since we cannot determine which of the two entries is the correct or most reliable one, keeping them could introduce 
+inconsistencies and potential bias in the analysis.
+Rather than arbitrarily selecting one of the rows, we opt to remove these ambiguous cases to ensure data integrity.
+```{r}
+# Remove rows that share the exact same id
+table_unique <- table_unique %>%
+  group_by(id) %>%
+  filter(n() == 1) %>%
+  ungroup()
+
 # Create an Age Group column for plotting
 table_unique <- table_unique %>%
   mutate(age_group = cut(age, breaks = seq(20, 100, by = 10), right = FALSE, include.lowest = TRUE))
@@ -370,7 +387,6 @@ table_unique <- table_unique %>%
     )
   ) %>%
   filter(!is.na(group))  # Remove NA values
-
 
 # Count patients in each group
 group_counts <- table_unique %>%
@@ -491,20 +507,7 @@ normalized_data <- aggregated_data %>%
 new_normalized_data <- select(normalized_data, c(id, colnames(normalized_data)[3:14], group))
 
 # Create annotation data frame for G1-G4 groups
-annotation_col <- data.frame(Group = factor(new_normalized_data$group))
-
-# Summarise data (there are repeated patients ids)
-new_normalized_data <- new_normalized_data %>%
-  group_by(id) %>%
-  summarise(across(where(is.numeric), ~mean(.x, na.rm = TRUE)),  # Aggregate only numeric columns
-  group = ifelse(all(is.na(group)), NA,  # If all group values are NA, return NA
-        names(sort(table(na.omit(group)), decreasing = TRUE))[1]))  # Select most common non-NA group
-
-# Check for remaining duplicates
-sum(duplicated(new_normalized_data$id))  # Should return 0 if all duplicates are handled
-
-# Assign row names according to patient id
-rownames(annotation_col) <- new_normalized_data$id 
+annotation_col_group <- data.frame(Group = factor(new_normalized_data$group))
 
 # Define colors for the groups
 group_colors <- list(Group = c("G1" = "green", "G2" = "blue", "G3" = "red", "G4" = "purple"))
@@ -513,6 +516,9 @@ group_colors <- list(Group = c("G1" = "green", "G2" = "blue", "G3" = "red", "G4"
 new_normalized_data <- as.data.frame(new_normalized_data)
 # Set patient id as rownames
 rownames(new_normalized_data) <- new_normalized_data$id
+
+# Assign row names according to patient id
+rownames(annotation_col_group) <- new_normalized_data$id 
 
 # Create heatmap
 # Convert to numeric matrix for heatmap, preserve patient id as row names
@@ -527,7 +533,7 @@ pheatmap(t(data_matrix),
          show_colnames = FALSE,
          fontsize_row = 10,
          main = "Cytokine Expression Heatmap (Relative Expression)",
-         annotation_col = annotation_col,  
+         annotation_col_group = annotation_col_group,  
          annotation_colors = group_colors)
 
 ```
@@ -545,6 +551,8 @@ pheatmap(t(data_matrix),
 Add a second annotation with information of deathm and a third one with information of gender
 
 ```{r}
+
+
 
 ```
 
