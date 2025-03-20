@@ -23,7 +23,6 @@ The original dataset comes from [here](https://archive.ics.uci.edu/ml/datasets/H
 As we saw in class, the major tasks during EDA are data cleaning, data integration, data reduction and data transformation. We will start by cleaning the data: we will handle missing data, check if there are inconsistencies with the data types, and identify and remove outliers.
 Data integration is not necessary for this exercise, since we are working with only one file.
 
-TODO: are data reduction (dimensionality reduction, numerosity reduction and datacompression) and data transformation (normalizing, scaling) applicable to this exercise?
 ```{r}
 library(outliers)
 library(rmarkdown)
@@ -34,7 +33,7 @@ data_frame <- read.table("data/heart_disease_dataset.csv", header=TRUE, sep=" ")
 # The column patient_id works great as entity identifier. Rearrange the data so that this column is now the first
 data_frame <- data_frame[, c(ncol(data_frame), 1:(ncol(data_frame) - 1))]
 
-#Data Cleaning
+# Data Cleaning
 # 1. Check the data types
 # 2. Check for missing values
 # 3. Check for duplicate rows
@@ -83,7 +82,8 @@ data_frame <- data_frame[!outlier_rows, ]
 summary(data_frame)
 
 ```
-Now that we cleaned the data, we proceed to do the Exploratory Data Analysis. We used the steps provided in [this guide](https://www.kaggle.com/code/georgyzubkov/heart-disease-exploratory-data-analysis).  
+
+Now that we have cleaned the data, we proceed to do the Exploratory Data Analysis. We used the steps provided in [this guide](https://www.kaggle.com/code/georgyzubkov/heart-disease-exploratory-data-analysis).  
 
 The dataset contains 303 records, each variable has 15 fields. The dataset contains variables of different types:
 
@@ -108,7 +108,7 @@ The dataset contains 303 records, each variable has 15 fields. The dataset conta
 
 
 ```{r}
-#XRS 1. Check the dataset for gaps in the data
+# 1. Check the dataset for gaps in the data
 # Create a data frame for the missing values for plotting
 df_missing <- data.frame(Variable = names(missing_counts), Missing_Count = missing_counts)
 # Load ggplot2
@@ -123,9 +123,10 @@ ggplot(df_missing, aes(x = reorder(Variable,-Missing_Count), y = Missing_Count))
        y = "Missing values counts") +
   theme_minimal()
 ```
+
 We do have some missing values, but we removed them in the cleaning steps above.
 ```{r}
-#XRS 2. Look at the distribution of the target variable: heart disease
+# 2. Look at the distribution of the target variable: heart disease
 num_counts <- as.data.frame(table(data_frame$num))
 
 # Plot
@@ -136,10 +137,11 @@ ggplot(num_counts, mapping = aes(x=Var1, y=Freq)) +
        y = "Count") +
   theme_minimal()
 ```
+
 The sample seems to be unbalanced, with the majority of the patients being in the category 0 .
 ```{r}
-# XRS 3: Indicate the types of variables (see paragraph above)
-# XRS 4: Look at unique values in the categorical objects
+# 3: Indicate the types of variables (see paragraph above)
+# 4: Look at unique values in the categorical objects
 unique(data_frame$sex)
 unique(data_frame$cp)
 unique(data_frame$fbs)
@@ -148,7 +150,7 @@ unique(data_frame$exang)
 unique(data_frame$slope)
 unique(data_frame$thal)
 
-# WB 5: Analyze numerical variables (visualizing continuous columns)
+# 5: Analyze numerical variables (visualizing continuous columns)
 num_vars <- c("age", "trestbps", "chol", "thalach", "oldpeak")  
 cat_vars <- c("sex", "cp", "fbs", "restecg", "exang", "slope", "thal", "ca")  
 
@@ -161,9 +163,10 @@ for (var in num_vars) {
   )
 }
 ```
+
 The distributions of age, cholesterol, and maximum heart rate appear roughly normal, while resting blood pressure shows multiple peaks, suggesting possibly different subgroups within the dataset. ST depression is highly right-skewed, with most values close to zero, indicating that significant ST depression is relatively rare in the dataset.
 ```{r}
-# WB 6. Look at the distribution of number of people with heart disease from various factors
+# 6. Look at the distribution of number of people with heart disease from various factors
 # Get the number of unique values in num
 num_levels <- length(unique(data_frame$num))
 
@@ -180,6 +183,7 @@ for (var in num_vars) {
   )
 }
 ```
+
 Thalach decreases, while oldpeak increases with heart disease severity, suggesting their strong predictive value. Age shows a slight upward trend, while trestbps and chol display high variability but no clear pattern.
 ```{r}
 for (var in cat_vars) {
@@ -191,9 +195,10 @@ for (var in cat_vars) {
   )
 }
 ```
+
 Heart disease is more prevalent in males, higher chest pain types, and abnormal thalassemia. Higher major vessels count (ca), slope, and exercise-induced angina (exang) also show trends linked to severity.
 ```{r}
-# WB 7. Look at the distribution of categorical variables depending on gender
+# 7. Look at the distribution of categorical variables depending on gender
 for (var in cat_vars) {
   print(
     ggplot(data_frame, aes_string(x = var, fill = "factor(sex)")) +
@@ -203,9 +208,10 @@ for (var in cat_vars) {
   )
 }
 ```
+
 Males dominate the dataset and have higher chest pain type, abnormal thalassemia, and major vessels (ca). Gender-based differences exist in exercise-induced angina and resting ECG, potentially impacting heart disease risk.
 ```{r}
-# WB 8. Look at outliers in numerical values depending on several factors
+# 8. Look at outliers in numerical values depending on several factors
 for (var in num_vars) {
   print(
     ggplot(data_frame, aes_string(x = "factor(num)", y = var, fill = "factor(num)")) +
@@ -216,6 +222,7 @@ for (var in num_vars) {
   )
 }
 ```
+
 Outliers are present in cholesterol, maximum heart rate (thalach), and ST depression (oldpeak), particularly in severe heart disease cases. Oldpeak increases with disease severity, while thalach decreases, reinforcing their potential as key indicators.
 ```{r}
 for (var in num_vars) {
@@ -228,10 +235,8 @@ for (var in num_vars) {
   )
 }
 
-#CONCLUSION ---> e.g. from all the graphs presented, it can be concluded that e.g. "alcohol consumption and smoking are not the main factors in heart disease"
-
-
 ```
+
 Outliers are minimal across genders, with males showing slightly higher oldpeak values and females exhibiting lower but more varied thalach. Other variables have similar distributions, suggesting gender differences may be less pronounced in outliers.
 
 
@@ -251,7 +256,7 @@ selected_data <- data_frame[, c("num", "oldpeak", "age", "trestbps", "chol", "th
 selected_data <- selected_data %>%
   mutate(across(everything(), as.numeric))
 
-#correlation matrix with the numeric measurements
+# Correlation matrix with the numeric measurements
 cor_matrix <- cor(selected_data, method = "spearman")
 corrplot(cor_matrix, method = "color", type = "full", addCoef.col = "black",
          tl.col = "black", tl.srt = 45, number.cex = 0.8)
@@ -303,7 +308,7 @@ table_unique <- table_unique %>%
 table_unique <- table_unique %>%
   mutate(age_group = cut(age, breaks = seq(20, 100, by = 10), right = FALSE, include.lowest = TRUE))
 
-# Step 4: Create the histogram with adjustments for styling
+# Create the histogram with adjustments for styling
 ggplot(data = table_unique, mapping = aes(x = age)) +
   geom_histogram(
     binwidth = 10,
@@ -445,7 +450,7 @@ print(fig_1d)
 ```
 
 
-## Reproduce Figure 2 from the publication
+## Reproduce Figure 2 from the publication 
 but instead of representing the clusters in the annotation, represent the groups (G1 to G4)
 
 ```{r}
@@ -524,15 +529,17 @@ pheatmap(
   show_rownames = TRUE,  
   show_colnames = FALSE,  
   fontsize_row = 10,  
-  main = "Cytokine Expression Heatmap (Normalized)",  
-  annotation_col = annotation_col_group,  # Add Group, Death, and Gender annotations
+  main = "Cytokine Expression Heatmap",  
+  annotation_col = annotation_col_group,  # Add Group annotation
   annotation_colors = group_colors  # Use custom colors
 )
 
 ```
 
 ## Improve figure 2 of the publication
-Add a second annotation with information of deathm and a third one with information of gender
+Add a second annotation with information of death and a third one with information of gender
+
+In our improved figure, we normalize the cytokine data.
 
 ```{r}
 library(readxl)
@@ -595,7 +602,7 @@ normalized_data <- aggregated_data %>%
   mutate(across(-c(id, group, gender, death), min_max_norm))
 
 # Remove unnecessary columns and prepare the data for heatmap
-# Only keep the first 14 columns of the data frame, except column Day (which contain the cytokine measurements we are interested in plotting)
+# Keep the first 14 columns of the data frame, except column Day (which contain the cytokine measurements we are interested in plotting) together with group, gender and death
 new_normalized_data <- select(normalized_data, c(id, colnames(normalized_data)[3:14], group, gender, death))
 
 # Create annotation data frame for G1-G4 groups, death and gender
@@ -622,7 +629,7 @@ rownames(annotation_cols) <- new_normalized_data$id
 
 # Create heatmap
 # Convert to numeric matrix for heatmap, preserve patient id as row names
-data_matrix <- as.matrix(new_normalized_data[,-c(1, (ncol(new_normalized_data)-2):ncol(new_normalized_data))]) # Exclude patient id and group
+data_matrix <- as.matrix(new_normalized_data[,-c(1, (ncol(new_normalized_data)-2):ncol(new_normalized_data))]) # Exclude patient id and group, gender and death
 
 # Generate the heatmap
 pheatmap(t(data_matrix),
