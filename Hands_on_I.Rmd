@@ -616,6 +616,10 @@ aggregated_data <- clean_data %>%
 
 # Merge patient group information (G1-G4)
 aggregated_data <- left_join(aggregated_data, table_unique %>% select(id, group), by = "id")
+# Merge patient gender information
+aggregated_data <- left_join(aggregated_data, table_unique %>% select(id, gender), by = "id")
+# Merge patient death information
+aggregated_data <- left_join(aggregated_data, table_unique %>% select(id, death), by = "id")
 
 # Scale each cytokine between 0 (min) and 1 (max)
 min_max_norm <- function(x) {
@@ -624,17 +628,25 @@ min_max_norm <- function(x) {
 
 # Apply normalization to all cytokine columns (except for id)
 normalized_data <- aggregated_data %>%
-  mutate(across(-c(id, group), min_max_norm))
+  mutate(across(-c(id, group, gender, death), min_max_norm))
 
 # Remove unnecessary columns and prepare the data for heatmap
 # Only keep the first 14 columns of the data frame, except column Day (which contain the cytokine measurements we are interested in plotting)
-new_normalized_data <- select(normalized_data, c(id, colnames(normalized_data)[3:14], group))
+new_normalized_data <- select(normalized_data, c(id, colnames(normalized_data)[3:14], group, gender, death))
 
-# Create annotation data frame for G1-G4 groups
-annotation_col_group <- data.frame(Group = factor(new_normalized_data$group))
+# Create annotation data frame for G1-G4 groups, death and gender
+annotation_cols <- data.frame(
+  Group = factor(new_normalized_data$group),
+  Death = factor(normalized_data$death, levels = c("No", "Yes")),
+  Gender = factor(normalized_data$gender, levels = c("M", "F"))
+)
 
 # Define colors for the groups
-group_colors <- list(Group = c("G1" = "green", "G2" = "blue", "G3" = "red", "G4" = "purple"))
+group_colors <- list(
+  Group = c("G1" = "#F87772", "G2" = "#0FBC40", "G3" = "#639BFE", "G4" = "#9551A7"),
+  Death = c("No" = "lightblue", "Yes" = "darkblue"),
+  Gender = c("M" = "gray", "F" = "pink")
+)
 
 # Make sure we are working with a data.frame and not a tibble
 new_normalized_data <- as.data.frame(new_normalized_data)
@@ -642,11 +654,11 @@ new_normalized_data <- as.data.frame(new_normalized_data)
 rownames(new_normalized_data) <- new_normalized_data$id
 
 # Assign row names according to patient id
-rownames(annotation_col_group) <- new_normalized_data$id 
+rownames(annotation_cols) <- new_normalized_data$id 
 
 # Create heatmap
 # Convert to numeric matrix for heatmap, preserve patient id as row names
-data_matrix <- as.matrix(new_normalized_data[,-c(1, ncol(new_normalized_data))]) # Exclude patient id and group
+data_matrix <- as.matrix(new_normalized_data[,-c(1, (ncol(new_normalized_data)-2):ncol(new_normalized_data))]) # Exclude patient id and group
 
 # Generate the heatmap
 pheatmap(t(data_matrix),
@@ -657,7 +669,7 @@ pheatmap(t(data_matrix),
          show_colnames = FALSE,
          fontsize_row = 10,
          main = "Cytokine Expression Heatmap (Relative Expression)",
-         annotation_col = annotation_col_group,  
+         annotation_col = annotation_cols,  
          annotation_colors = group_colors)
 
 ```
